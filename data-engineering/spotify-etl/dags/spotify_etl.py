@@ -1,23 +1,20 @@
-import sqlalchemy
 import pandas as pd
+import sqlalchemy
 from sqlalchemy.orm import sessionmaker
-import requests
-import json
 from datetime import datetime
 import datetime
+import requests
 import sqlite3
-
-DATABASE_LOCATION = "sqlite:///my_played_tracks.sqlite"
-
-# Username of Spotify account
-USER_ID = "0ae40oyrgzs03en0wp946cz6b"
-
-# Token ID from Spotify API
-TOKEN = "BQBfhwuUdpWikHhe3yuhWFXWgsLKcbbLkCEaVDOP0VtIf7vh3RspD-iQ8R23DmHUh260nCodhsLD4XD1HWW_LpfmDbslbHd4FEQ8E4ZkGBYl3CR6WqfBHRUrXHrCZ4PZzEVjjH5rTTIEApu043c215oNnOJf8KvuLgg1"
+import json
+import venv
 
 def validate_data(df: pd.DataFrame) -> bool:
-    
-    # Check is no song is downloaded
+    """
+    This function validates the data returned by Spotify API.
+    Validation is performed as part of transform phase of ETL process
+    """
+
+    # Check if no song is downloaded
     if df.empty:
         print("No songs downlaoded!!")
         return False
@@ -43,14 +40,48 @@ def validate_data(df: pd.DataFrame) -> bool:
 
     return True
 
-if __name__ == "__main__":
+def get_token():
+    """
+    This function first gets the client_id from the existing Spotify account.
+    Then, this is used to get access token using POST method.
+    """
+    
+    # Gets the CLIENT_ID and CLIENT_SECRET from the Spotify Developer Dashboard
+    CLIENT_ID = "6621e937b5184b71b9e0fa9533621597"
+    CLIENT_SECRET = "9523326c7d86499996cfc93ae3faf837"
+    
+    AUTH_URL = "https://accounts.spotify.com/api/token"
+
+    # POST
+    auth_response = requests.post(AUTH_URL, {
+    'grant_type': 'client_credentials',
+    'client_id': CLIENT_ID,
+    'client_secret': CLIENT_SECRET,
+    })
+
+    # Converts the response to JSON
+    auth_response_data = auth_response.json()
+
+    # Saves the access token
+    access_token = auth_response_data['access_token']
+
+    return access_token
+
+
+def run_spotify_etl():
+
+    database_location = "sqlite:///my_played_tracks.sqlite"
+    # Username of Spotify account
+    user_id = "0ae40oyrgzs03en0wp946cz6b"
+    # Token ID from Spotify API
+    token = get_token()
 
     # Extract part of the ETL process
- 
+
     headers = {
         "Accept" : "application/json",
         "Content-Type" : "application/json",
-        "Authorization" : "Bearer {token}".format(token=TOKEN)
+        "Authorization" : "Bearer {token}".format(token=token)
     }
     
     # Convert time to Unix timestamp in milliseconds      
@@ -94,7 +125,7 @@ if __name__ == "__main__":
     # Some of the common relational databases are MySQL, PostgreSQL, SQLite etc.
     # Non-relational database could be MongoDB, Apache Cassandra, DynamoDB, etc.
 
-    engine = sqlalchemy.create_engine(DATABASE_LOCATION)
+    engine = sqlalchemy.create_engine(database_location)
     conn = sqlite3.connect('my_played_tracks.sqlite')
     cursor = conn.cursor()
 
