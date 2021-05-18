@@ -1,4 +1,3 @@
-from numpy import empty
 import sqlalchemy
 import pandas as pd
 from sqlalchemy.orm import sessionmaker
