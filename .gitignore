@@ -25,3 +25,7 @@ env/
 venv/
 ENV/
 env.bak/
+
+data-engineering/bin/
+data-engineering/lib/
+data-engineering/pyvenv.cfg
